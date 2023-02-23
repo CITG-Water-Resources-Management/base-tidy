@@ -1,7 +1,7 @@
 ---
 title: "`base` vs `tidyverse` vs `data.table` "
-author: "Colby RUG 2019.12.11"
-date: " Manny Gimond"
+author: "Ashley Cryan and Aleksandra Wilczynska"
+date: " CML DCC working group"
 output: 
   html_document:
     toc: true
@@ -14,6 +14,8 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning = FALSE, comment = NA)
 ```
+
+This summary is originally written by Manny Gimond. You can find the source [here](https://github.com/mgimond/rug_2019_12).
 
 This write-up highlights differences between the `base`, `tidyverse` and `data.table` ecosystems as it pertains to data manipulation. 
 
@@ -167,28 +169,6 @@ out <- df[ , c("mpg", "hp")]
 ```
 </div>
  
-  
-*NOTE: in base R, if you extract a single column, the output will be a vector. To force the output to a dataframe, add `drop = FALSE` as in `df[ , "hp", drop = FALSE]`*
-
-### Subsetting by row number
-
-<div class="c1">
-<span class="base">
-df[1:3 , ]
-</span><br><span class="tidy">
-slice(tb, 1:3)
-</span><br><span class="dtbl">
-dt[1:3, , ]
-</span>
-</div><div class = "c2">
-```{r echo=FALSE}
-out <- df[1:3 , ]
- kable(out, format = "html",escape = FALSE,padding=0) %>%
-   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
-   scroll_box(height = "130px")
-```
-</div>
-
 
 
 ### Subsetting by variable values
@@ -211,13 +191,64 @@ out <- df[ df$mpg > 20, ]
 </div>
 
 
+ 
+### Chaining commands
+
+Base R does not have native chaining structure like the `tidyverse` or `data.table.` Instead, it relies on a series of standalone operations. However, one technique that can be adopted to make it *seem* as though a series of operations are to be run in unison is to pass each intermediate steps to the `.` object as in ` . <- mean(x)`.
+
+The `tidyverse` adopts `margeritr`'s pipe, `%>%`, to piece operations together. 
+
+The `data.table` pieces bracketed operations back to back as in `[...][...]...`. Note that if you are to split data.table operations across multiple lines, you must split the line in the middle of an open bracket as in:
+```
+[ ,do something>][
+ do another thing][
+   and so on]
+```
+  
+  
+  
+In this example, we'll first create a new variable, `gpm`, then we'll  compute the median `gpm` value grouped by `cyl`  before sorting the summary in descending order.
+
+<div class="c1">
+<pre class="base">
+df$gpm <- 1/df$mpg
+. <- df[ , c("cyl", "gpm")]
+. <- aggregate(., list(df$cyl), median)
+.$Group.1 <- NULL
+.[order(-.$gpm), ]
+</pre><br><pre class="tidy">
+tb %>% 
+  mutate(gpm = 1/mpg) %>% 
+  group_by(cyl) %>% 
+  summarise(gpm = median(gpm)) %>% 
+  arrange(-gpm)
+</pre><br><pre class="dtbl">
+dt[ , gpm := 1/mpg, ][ 
+   order(-gpm), .(gpm = median(gpm)), 
+   by = cyl]
+</pre>
+</div><div class = "c2">
+```{r echo=FALSE}
+df$gpm <- 1/df$mpg
+. <- df[ , c("cyl", "gpm")]
+. <- aggregate(., list(df$cyl), median)
+.$Group.1 <- NULL
+out <- .[order(-.$gpm), ]
+ kable(out, format = "html",escape = FALSE,padding=0) %>%
+   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
+   scroll_box(height = "130px")
+```
+</div>
+
+
+
 ### Sorting a table (in ascending order)
 
 <div class="c1">
 <span class="base">
 df[order(df$mpg) , ]
 </span><br><span class="tidy">
-arrange(tb, mpg)
+tb %>% arrange(mpg)
 </span><br><span class="dtbl">
 dt[order(mpg) , ]
 </span>
@@ -236,7 +267,7 @@ out <- df[order(df$mpg) , ]
 <span class="base">
 df[order(-df$mpg) , ]
 </span><br><span class="tidy">
-arrange(tb, -mpg)
+tb %>% arrange(-mpg)
 </span><br><span class="dtbl">
 dt[order(-mpg) , ]
 </span>
@@ -254,7 +285,7 @@ out <- df[order(-df$mpg) , ]
 <span class="base">
 df[order(df\$cyl, df\$mpg) , ]
 </span><br><span class="tidy">
-arrange(tb, cyl, mpg)
+tb %>% arrange(cyl, mpg)
 </span><br><span class="dtbl">
 dt[order(cyl, mpg) , ]
 </span>
@@ -270,13 +301,14 @@ out <- df[order(df$cyl, df$mpg) , ]
 ### Creating a new column
 
 <div class="c1">
-<span class="base">
+<pre class="base">
 df\$gpm <- 1 / df\$mpg
-</span><br><span class="tidy">
-tb <- mutate(tb, gpm = 1 / mpg)
-</span><br><span class="dtbl">
+</pre><br><pre class="tidy">
+tb <- tb %>% 
+  mutate(gpm = 1 / mpg)
+</pre><br><pre class="dtbl">
 dt[ , gpm := 1 / mpg, ]
-</span>
+</pre>
 </div><div class = "c2">
 ```{r echo=FALSE}
 df$gpm <- 1/df$mpg
@@ -290,13 +322,14 @@ out <- df
 ### Deleting a column
 
 <div class="c1">
-<span class="base">
+<pre class="base">
 df$gpm <- NULL
-</span><br><span class="tidy">
-tb <- select(tb, -gpm)
-</span><br><span class="dtbl">
+</pre><br><pre class="tidy">
+tb <- tb %>% 
+   select( -gpm)
+</pre><br><pre class="dtbl">
 dt[ , gpm := NULL, ]
-</span>
+</pre>
 </div><div class = "c2">
 ```{r echo=FALSE}
 df$gpm <- NULL
@@ -314,8 +347,9 @@ out <- df
 <span class="base">
 apply(df[ , c("mpg","hp")], 2, median)
 </span><br><pre class="tidy">
-summarise(tb, mpg = median(mpg), 
-              hp = median(hp))
+tb %>% 
+   summarise(mpg = median(mpg), 
+             hp = median(hp))
 </pre><br><pre class="dtbl">
 dt[ , .(mpg = median(mpg), 
         hp = mean(hp)) , ]
@@ -331,13 +365,15 @@ out <- summarise(tb, mpg = median(mpg), hp = median(hp))
  
 *NOTE: The `base` method returns a vector while the  `tidyverse` and `data.table` methods return a table.*
 
-### Summarizing all columns
+### Summarising multiple columns 
 
 <div class="c1">
-<span class="base">
+<pre class="base">
 apply(df, 2, max)
-</span><br><pre class="tidy">
-summarise_each(tb, max)
+</pre><br><pre class="tidy">
+tb %>% 
+   summarise(across(.cols = everything(),
+                     max))
 </pre><br><pre class="dtbl">
 dt[ , lapply(.SD,  max) , ]
 </pre>
@@ -350,15 +386,17 @@ out <- dt[ , lapply(.SD,  max) , ]
 ```
 </div>
 
-* NOTE: The apply function returns a vector. As such, the data type will inheret the  [highest common mode](https://mgimond.github.io/ES218/Week02a.html#(atomic)_vectors) (character in this example).
 
 ### Summarizing all columns by group
 
 <div class="c1">
-<span class="base">
+<pre class="base">
 aggregate(df, list(df$cyl), max)
-</span><br><pre class="tidy">
-group_by(tb, cyl) %>% summarise_each(max)
+</pre><br><pre class="tidy">
+tb %>% 
+   group_by( cyl) %>%
+   summarise(across(.cols = everything(),
+                    max)))
 </pre><br><pre class="dtbl">
 dt[ , lapply(.SD,  max), by = cyl ] 
 </pre>
@@ -371,6 +409,49 @@ out <- dt[ , lapply(.SD,  max), by = cyl ]
 ```
 </div>
 
+
+### Joining tables
+
+We'll first create a lookup table that pairs up the `am` variable values with a text descriptor.
+
+
+<div class="c1">
+```{r}
+df.lu <- data.frame(x = c(0,1), 
+                    y = c("automatic",
+                          "manual"))
+tb.lu <- as_tibble(df.lu)
+dt.lu <- as.data.table(df.lu)
+```
+</div><div class = "c2">
+```{r echo=FALSE}
+out <- df.lu
+ kable(out, format = "html",escape = FALSE,padding=0) %>%
+   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
+   scroll_box(height = "130px")
+```
+</div>
+
+Next, we join the tables.
+
+<div class="c1">
+<pre class="base">
+merge(df, df.lu, by.x = "am", 
+          by.y="x", all.x = TRUE)
+</pre><br><pre class="tidy">
+left_join(tb, tb.lu, 
+          by = c("am" = "x"))
+</pre><br><pre class="dtbl">
+dt[dt.lu, on = c("am" = "x")]
+</pre>
+</div><div class = "c2">
+```{r echo=FALSE}
+out <- merge(df, df.lu, by.x = "am", by.y="x", all.x = TRUE)
+ kable(out, format = "html",escape = FALSE,padding=0) %>%
+   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
+   scroll_box(height = "130px")
+```
+</div>
 
 
 ### Pivoting table to long format
@@ -448,64 +529,8 @@ out <- tb.w
 ```
 </div>
 
-### Joining tables
 
-We'll first create a lookup table that pairs up the `am` variable values with a text descriptor.
-
-
-<div class="c1">
-```{r}
-df.lu <- data.frame(x = c(0,1), 
-                    y = c("automatic",
-                          "manual"))
-tb.lu <- as_tibble(df.lu)
-dt.lu <- as.data.table(df.lu)
-```
-</div><div class = "c2">
-```{r echo=FALSE}
-out <- df.lu
- kable(out, format = "html",escape = FALSE,padding=0) %>%
-   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
-   scroll_box(height = "130px")
-```
-</div>
-
-Next, we join the tables.
-
-<div class="c1">
-<pre class="base">
-merge(df, df.lu, by.x = "am", 
-          by.y="x", all.x = TRUE)
-</pre><br><pre class="tidy">
-left_join(tb, tb.lu, 
-          by = c("am" = "x"))
-</pre><br><pre class="dtbl">
-dt[dt.lu, on = c("am" = "x")]
-</pre>
-</div><div class = "c2">
-```{r echo=FALSE}
-out <- merge(df, df.lu, by.x = "am", by.y="x", all.x = TRUE)
- kable(out, format = "html",escape = FALSE,padding=0) %>%
-   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
-   scroll_box(height = "130px")
-```
-</div>
-
- 
-### Chaining commands
-
-Base R does not have native chaining structure like the `tidyverse` or `data.table.` Instead, it relies on a series of standalone operations. However, one technique that can be adopted to make it *seem* as though a series of operations are to be run in unison is to pass each intermediate steps to the `.` object as in ` . <- mean(x)`.
-
-The `tidyverse` adopts `margeritr`'s pipe, `%>%`, to piece operations together. 
-
-The `data.table` pieces bracketed operations back to back as in `[...][...]...`. Note that if you are to split data.table operations across multiple lines, you must split the line in the middle of an open bracket as in:
-```
-[ ,do something>][
- do another thing][
-   and so on]
-```
-
-  ## Summary of key functions
+## Summary of key functions
 
 
 ```{r echo=FALSE}
@@ -561,41 +586,6 @@ cmp <- data.frame( `Environment` = c("Supported data class(es)",
    kable_styling("striped", full_width = F, position = "left") 
 ```
 
-  
-  
-  
-In this example, we'll first create a new variable, `gpm`, then we'll  compute the median `gpm` value grouped by `cyl`  before sorting the summary in descending order.
-
-<div class="c1">
-<pre class="base">
-df$gpm <- 1/df$mpg
-. <- df[ , c("cyl", "gpm")]
-. <- aggregate(., list(df$cyl), median)
-.$Group.1 <- NULL
-.[order(-.$gpm), ]
-</pre><br><pre class="tidy">
-tb %>% 
-  mutate(gpm = 1/mpg) %>% 
-  group_by(cyl) %>% 
-  summarise(gpm = median(gpm)) %>% 
-  arrange(-gpm)
-</pre><br><pre class="dtbl">
-dt[ , gpm := 1/mpg, ][ 
-   order(-gpm), .(gpm = median(gpm)), 
-   by = cyl]
-</pre>
-</div><div class = "c2">
-```{r echo=FALSE}
-df$gpm <- 1/df$mpg
-. <- df[ , c("cyl", "gpm")]
-. <- aggregate(., list(df$cyl), median)
-.$Group.1 <- NULL
-out <- .[order(-.$gpm), ]
- kable(out, format = "html",escape = FALSE,padding=0) %>%
-   kable_styling("striped", full_width = F, position = "left",font_size = 10) %>% 
-   scroll_box(height = "130px")
-```
-</div>
 
 
 -----
