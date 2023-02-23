@@ -69,62 +69,6 @@ smry <- data.frame( `Environment`     = c( "Pros", "Cons"),
 ```
 
 
-## Summary of key functions
-
-
-```{r echo=FALSE}
-library(kableExtra)
-cmp <- data.frame( `Environment` = c("Supported data class(es)",
-                                    "Reading data", 
-                                    "Subset by column",
-                                    "Subset by rows",
-                                    "Create new column",
-                                    "Delete a column",
-                                    "Summarize",
-                                    "Grouping",
-                                    "Pivot to long",
-                                    "Pivot to wide",
-                                    "Joining tables"),
-                  `base`      = c( "`data.frame`",
-                                   "`read.csv`", 
-                                   "`[ , ...]`",
-                                   "`[... , ]`",
-                                   "`df$y = ...`",
-                                   "`df$y = NULL`",
-                                   "`apply(df[ , y], 2, ...)`",
-                                   "`aggregate()`",
-                                   "`reshape()`",
-                                   "`reshape()`",
-                                   "`merge()`"),
-                  `tidyverse` = c( "`data.frame`, `tibble`",
-                                   "`read_csv`",
-                                   "`select()`",
-                                   "`filter()`",
-                                   "`mutate(tb, y = ...)`",
-                                   "`select(tb, -y)`",
-                                   "`summarise()`",
-                                   "`group_by()`",
-                                   "`pivot_longer()`",
-                                   "`pivot_wider()`",
-                                   "`left_join()`"),
-                  `data.table`  = c("`data.table`",
-                                    "`fread`",
-                                    "`[ ,... , ]`",
-                                    "`[... , , ]`",
-                                    "`[ , y := ..., ]`",
-                                    "`[ , y := NULL, ]`",
-                                    "`[ , ...(y), ]`",
-                                    "`[ , , by = ...]`",
-                                    "`melt()`",
-                                    "`dcast()`",
-                                    "`DT1[ DT2, on = ...]`"))
-
-
-
- kable(cmp, format = "html",escape = FALSE) %>%
-   kable_styling("striped", full_width = F, position = "left") 
-```
-
 ## Data prep
 
 Both `base` functions and `tidyverse` functions will accept a `data.frame` as input. `tidyverse` functions will also accept the `tidyverse`'s native `tibble` format. In the following exercises, a `tibble` will be passed to all `tidyverse` functions if only to distinguish a tidyverse operation from a `base` or `data.table` operation.
@@ -561,6 +505,65 @@ The `data.table` pieces bracketed operations back to back as in `[...][...]...`.
    and so on]
 ```
 
+  ## Summary of key functions
+
+
+```{r echo=FALSE}
+library(kableExtra)
+cmp <- data.frame( `Environment` = c("Supported data class(es)",
+                                    "Reading data", 
+                                    "Subset by column",
+                                    "Subset by rows",
+                                    "Create new column",
+                                    "Delete a column",
+                                    "Summarize",
+                                    "Grouping",
+                                    "Pivot to long",
+                                    "Pivot to wide",
+                                    "Joining tables"),
+                  `base`      = c( "`data.frame`",
+                                   "`read.csv`", 
+                                   "`[ , ...]`",
+                                   "`[... , ]`",
+                                   "`df$y = ...`",
+                                   "`df$y = NULL`",
+                                   "`apply(df[ , y], 2, ...)`",
+                                   "`aggregate()`",
+                                   "`reshape()`",
+                                   "`reshape()`",
+                                   "`merge()`"),
+                  `tidyverse` = c( "`data.frame`, `tibble`",
+                                   "`read_csv`",
+                                   "`select()`",
+                                   "`filter()`",
+                                   "`mutate(tb, y = ...)`",
+                                   "`select(tb, -y)`",
+                                   "`summarise()`",
+                                   "`group_by()`",
+                                   "`pivot_longer()`",
+                                   "`pivot_wider()`",
+                                   "`left_join()`"),
+                  `data.table`  = c("`data.table`",
+                                    "`fread`",
+                                    "`[ ,... , ]`",
+                                    "`[... , , ]`",
+                                    "`[ , y := ..., ]`",
+                                    "`[ , y := NULL, ]`",
+                                    "`[ , ...(y), ]`",
+                                    "`[ , , by = ...]`",
+                                    "`melt()`",
+                                    "`dcast()`",
+                                    "`DT1[ DT2, on = ...]`"))
+
+
+
+ kable(cmp, format = "html",escape = FALSE) %>%
+   kable_styling("striped", full_width = F, position = "left") 
+```
+
+  
+  
+  
 In this example, we'll first create a new variable, `gpm`, then we'll  compute the median `gpm` value grouped by `cyl`  before sorting the summary in descending order.
 
 <div class="c1">
